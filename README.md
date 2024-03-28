@@ -14,3 +14,5 @@ Here's how it works:
     - post_creator uses the date as the post date, then fills in the tags, title, and image parameters in the markdown.
 - Once the markdown files are created, they are moved to the blog's local repository and committed. 
 - Netlify will then automatically rebuild the site and voila, new puppy photos are published on [Puppy Dog Kisses](https://puppydogkisses.com)
+
+I didn't do a lot of error handling, that's all for a future version!
