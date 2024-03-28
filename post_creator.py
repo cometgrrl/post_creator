@@ -15,9 +15,8 @@ import datetime
 import os
 import subprocess
 
-test_mode = True
+test_mode = False
 REPOSITORY_PATH = "/Users/brienna/Code/puppydogkisses/content/blog/"
-#REPOSITORY_PATH = "/Users/brienna/Documents/PuppyDogKisses/" # for testing moving files
 IMAGES_FOLDER = "/Users/brienna/Code/puppydogkisses_images_for_posts/"
 
 # this function creates a markdown file for a post based on the image filename
@@ -30,33 +29,31 @@ def create_markdown_file(image_filename):
         return 0
     # set the image path based on the filename
     md_image_path = f"/img/{image_filename}"
-    #print(image_path)
     
     # remove the file extension from the title and split the filename into parts so we can get the title, date, and tags
     filename_without_extension = image_filename.split(".")[0]
     split_filename = filename_without_extension.split("__")
-    #print(split_filename)
     
     title = split_filename[2].split("_")
     title_string = ""
     for word in title:
         title_string += word
         title_string += " "
-    #print(title_string)
 
     tags = split_filename[1].split("_")
-    #print(tags)
+
     tag_string = ""
+
     for tag in tags:
         tag_string += tag
+    
     tag_string.strip()
+   
     if tag_string[-1:] == ",":
         tag_string = tag_string[:-1] # remove the last comma
-    #print(tag_string)
 
     date = datetime.datetime.strptime(split_filename[0], '%Y%m%d')
     date = date.replace(hour=8, minute=0, second=0, microsecond=0)
-    #print(date)
 
     # create the markdown file in the images folder
     markdown_filename = f"{filename_without_extension}.md"
@@ -94,8 +91,9 @@ def publish_posts(file_to_publish):
     # add filenames to the git add command
     git_add_command += f"{file_to_publish['image_filename']} {file_to_publish['markdown_filename']} "
     # run the git add command
-    print(git_add_command)
+
     os.chdir(REPOSITORY_PATH)
+    
     add_result = subprocess.run(git_add_command, shell=True, capture_output=True, text=True)
     if add_result.returncode == 0:
         print("Add command executed successfully.")
@@ -150,7 +148,6 @@ if created_count == 1:
 elif created_count > 1:
     print(f"{created_count} posts successfully created.")
 else: print("No posts were created.")
-#print(post_files)
 
 files_to_publish = []  # Initialize files_to_publish list
 published_count = 0 # Initialize published_count variable
