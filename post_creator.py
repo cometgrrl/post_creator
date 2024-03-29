@@ -46,7 +46,7 @@ class BlogPost:
         
         # get the date from the filename
         self.date = datetime.datetime.strptime(self.split_filename[0], '%Y%m%d')
-        self.date = self.date.replace(hour=20, minute=0, second=0, microsecond=0)
+        self.date = self.date.replace(hour=8, minute=0, second=0, microsecond=0)
        
        #get the title from the filename
         title_list = self.split_filename[2].split("_") # add some error handing here
