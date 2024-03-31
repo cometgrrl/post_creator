@@ -53,12 +53,14 @@ class BlogPost:
         for word in title_list:
             self.title_string += word
             self.title_string += " "
-
+        print (f'Title: {self.title_string}')
         # get the tags from the filename
         tags = self.split_filename[1].split("_") # add some error handing here
         for tag in tags:
-            self.tag_string += tag
+            self.tag_string += f"{tag} " 
+            
         self.tag_string.strip()
+        print (f'Tags: {self.tag_string}')
         if self.tag_string[-1:] == ",":
             self.tag_string = self.tag_string[:-1] # remove the last comma if it exists
 
