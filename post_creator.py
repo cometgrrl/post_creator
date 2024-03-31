@@ -15,7 +15,7 @@ import datetime
 import os
 import subprocess
 
-test_mode = True
+test_mode = False
 REPOSITORY_PATH = "/Users/brienna/Code/puppydogkisses/content/blog/"
 IMAGES_FOLDER = "/Users/brienna/Code/puppydogkisses_images_for_posts/"
 
