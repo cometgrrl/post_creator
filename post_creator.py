@@ -15,7 +15,7 @@ import datetime
 import os
 import subprocess
 
-test_mode = False
+test_mode = True
 REPOSITORY_PATH = "/Users/brienna/Code/puppydogkisses/content/blog/"
 IMAGES_FOLDER = "/Users/brienna/Code/puppydogkisses_images_for_posts/"
 
@@ -52,18 +52,18 @@ class BlogPost:
         title_list = self.split_filename[2].split("_") # add some error handing here
         for word in title_list:
             self.title_string += word
-            self.title_string += ", "
+            self.title_string += " "
         print (f'Title: {self.title_string}')
         # get the tags from the filename
         tags = self.split_filename[1].split("_") # add some error handing here
         for tag in tags:
-            self.tag_string += f"{tag} " 
+            self.tag_string += f"{tag}, " 
             
-        self.tag_string.strip()
-        print (f'Tags: {self.tag_string}')
+        self.tag_string = self.tag_string.strip()
+       
         if self.tag_string[-1:] == ",":
             self.tag_string = self.tag_string[:-1] # remove the last comma if it exists
-
+        print (f'Tags: {self.tag_string}') 
         # create the markdown file in the images folder
         with open(f"{IMAGES_FOLDER}{self.markdown_file}", "w") as file:
             file.write(f"---\n")
