@@ -26,7 +26,7 @@ class BlogPost:
         self.markdown_file = f"{self.filename}.md"
         self.markdown_image_path = f"/img/{self.image_file}" # set the image path based on the filename
         self.title_string = ""
-        self.tag_string = ""
+        self.tags = []
         self.image_file_path = f"{IMAGES_FOLDER}{self.image_file}"
         self.destination_path = f"{REPOSITORY_PATH}{self.image_file}"
         self.markdown_file_path = f"{IMAGES_FOLDER}{self.markdown_file}"
@@ -54,23 +54,18 @@ class BlogPost:
             self.title_string += word
             self.title_string += " "
         print (f'Title: {self.title_string}')
+
         # get the tags from the filename
-        tags = self.split_filename[1].split("_") # add some error handing here
-        for tag in tags:
-            self.tag_string += f"{tag}, " 
-            
-        self.tag_string = self.tag_string.strip()
-       
-        if self.tag_string[-1:] == ",":
-            self.tag_string = self.tag_string[:-1] # remove the last comma if it exists
-        print (f'Tags: {self.tag_string}') 
+        self.tags = self.split_filename[1].split("_") # add some error handing here
+        print (f'Tags: {self.tags}') 
+
         # create the markdown file in the images folder
         with open(f"{IMAGES_FOLDER}{self.markdown_file}", "w") as file:
             file.write(f"---\n")
             file.write(f"image: \"{self.markdown_image_path}\"\n")
             file.write(f"title: {self.title_string}\n")
             file.write(f"date: {self.date}\n")
-            file.write(f"tags: {self.tag_string}\n")
+            file.write(f"tags: {self.tags}\n")
             file.write(f"---\n")
             file.write(f"{{% image './{self.image_file}', '' %}}")
         print (f"{self.markdown_file} created")
