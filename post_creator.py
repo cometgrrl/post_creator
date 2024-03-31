@@ -52,7 +52,7 @@ class BlogPost:
         title_list = self.split_filename[2].split("_") # add some error handing here
         for word in title_list:
             self.title_string += word
-            self.title_string += " "
+            self.title_string += ", "
         print (f'Title: {self.title_string}')
         # get the tags from the filename
         tags = self.split_filename[1].split("_") # add some error handing here
