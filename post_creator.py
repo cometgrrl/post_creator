@@ -11,9 +11,9 @@ tags: Roxy
 '''
 # Filenames of the the images will be in the format of YYYYMMDD__tags__title.jpeg, we'll use this to generate the markdown files.
 
-import datetime
-import os
-import subprocess
+import datetime # to parse the date from the filename
+import os # to get and move the files
+import subprocess # to run git commands
 
 test_mode = False
 REPOSITORY_PATH = "/Users/brienna/Code/puppydogkisses/content/blog/"
@@ -78,7 +78,6 @@ class BlogPost:
         print(f"Files moved to repository: {self.filename}, {self.markdown_file}")
         return 0
 
-
     # this function publishes the posts to the blog by adding, committing, and pushing the files to the repository
     def publish_posts(self):
         today = datetime.date.today()
@@ -140,7 +139,7 @@ if files:
             if result == 0:
                 post_list.append(blog_post)  # Append the result to the list
                 created_count += 1 # Increment the post count
-elif created_count == 1:
+if created_count == 1:
     print(f"{created_count} post successfully created.")
 elif created_count > 1:
     print(f"{created_count} posts successfully created.")
@@ -162,10 +161,10 @@ if test_mode is False: # check for test mode
         if publish_result == 0:
             published_count +=1
             print(f"Post published: {post.image_file}")
+    if published_count == 1:
+        print("1 post published.")
+    elif published_count > 1:
+        print(f"{published_count} posts successfully published.")
+    else: print("No posts were published.")
 else:  print("Test mode: files not moved or commited to repository.")
-if published_count == 1:
-    print("1 post published.")
-else: print(f"{published_count} posts published.")
-
-
 
