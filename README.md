@@ -1,5 +1,5 @@
 # post_creator
-I recently converted [my blog](https://puppydogkisses.com) to a Eleventy blog using Netlify. Now that's done, I wanted to automate publishing new posts.
+I recently converted [my blog](https://puppydogkisses.com) to an Eleventy blog using Netlify. Now that's done, I wanted to automate publishing new posts.
 
 - Netlify will automatically build the site anytime changes are commited to the [repository](https://github.com/cometgrrl/puppydogkisses).
 - Each post consists of an image, tags, a title, and a post date. 
