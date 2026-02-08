@@ -16,8 +16,74 @@ import os # to get and move the files
 import subprocess # to run git commands
 
 test_mode = False
-REPOSITORY_PATH = "/Users/brienna/Code/puppydogkisses/content/blog/"
+REPO_ROOT = "/Users/brienna/Code/puppydogkisses"
+REPOSITORY_PATH = f"{REPO_ROOT}/content/blog/"
 IMAGES_FOLDER = "/Users/brienna/Code/puppydogkisses_images_for_posts/"
+
+def run_git(command, cwd, description):
+    result = subprocess.run(
+        command,
+        shell=True,
+        capture_output=True,
+        text=True,
+        cwd=cwd,
+    )
+    if result.returncode == 0:
+        if result.stdout.strip():
+            print(f"{description} output: {result.stdout.strip()}")
+    else:
+        print(f"{description} failed.")
+        if result.stdout.strip():
+            print("Output:", result.stdout.strip())
+        if result.stderr.strip():
+            print("Error:", result.stderr.strip())
+    return result
+
+def ensure_repo_ready(repo_root):
+    status_result = subprocess.run(
+        "git status --porcelain",
+        shell=True,
+        capture_output=True,
+        text=True,
+        cwd=repo_root,
+    )
+    if status_result.returncode != 0:
+        print("Git status check failed.")
+        if status_result.stderr.strip():
+            print("Error:", status_result.stderr.strip())
+        return False
+    if status_result.stdout.strip():
+        print("Repo has uncommitted changes. Please commit/stash them first.")
+        print("Status output:", status_result.stdout.strip())
+        return False
+
+    fetch_result = run_git("git fetch --prune", repo_root, "Git fetch")
+    if fetch_result.returncode != 0:
+        return False
+
+    pull_result = run_git("git pull --rebase", repo_root, "Git pull --rebase")
+    if pull_result.returncode != 0:
+        print("Rebase failed. Resolve conflicts or run 'git rebase --abort'.")
+        return False
+
+    status_after = subprocess.run(
+        "git status --porcelain",
+        shell=True,
+        capture_output=True,
+        text=True,
+        cwd=repo_root,
+    )
+    if status_after.returncode != 0:
+        print("Git status check failed after sync.")
+        if status_after.stderr.strip():
+            print("Error:", status_after.stderr.strip())
+        return False
+    if status_after.stdout.strip():
+        print("Repo is not clean after sync. Please resolve and retry.")
+        print("Status output:", status_after.stdout.strip())
+        return False
+
+    return True
 
 class BlogPost:
     def __init__(self, image_file_name):
@@ -31,6 +97,9 @@ class BlogPost:
         self.destination_path = f"{REPOSITORY_PATH}{self.image_file}"
         self.markdown_file_path = f"{IMAGES_FOLDER}{self.markdown_file}"
         self.markdown_destination_path = f"{REPOSITORY_PATH}{self.markdown_file}"
+        self.repo_image_rel = f"content/blog/{self.image_file}"
+        self.repo_markdown_rel = f"content/blog/{self.markdown_file}"
+        self.files_to_commit = []
 
     # this function creates a markdown file for a post based on the image filename
     def create_markdown_file(self):
@@ -73,57 +142,54 @@ class BlogPost:
 
     # this function moves the images and markdown files to the correct folder
     def move_files(self):        
-        os.rename(self.image_file_path, self.destination_path) # add some error handing here
-        os.rename(self.markdown_file_path, self.markdown_destination_path) # add some error handing here
-        print(f"Files moved to repository: {self.filename}, {self.markdown_file}")
-        return 0
+        try:
+            self.files_to_commit = []
+            os.replace(self.image_file_path, self.destination_path)
+            self.files_to_commit.append(self.repo_image_rel)
 
-    # this function publishes the posts to the blog by adding, committing, and pushing the files to the repository
-    def publish_posts(self):
-        today = datetime.date.today()
-        git_add_command ="git add "
-        git_commit_command = f"git commit -m  'New posts for {today}'"
-        git_push_command = "git push -u origin HEAD"
-
-        # add filenames to the git add command
-        git_add_command += f"{self.image_file} {self.markdown_file} "
-        # run the git add command
-
-        os.chdir(REPOSITORY_PATH)
-        
-        add_result = subprocess.run(git_add_command, shell=True, capture_output=True, text=True)
-        if add_result.returncode == 0:
-            print("Add command executed successfully.")
-            print("Output:", add_result.stdout)        
-            print(f"Files were successfully added.")
-            # run the git commit command
-            commit_result = subprocess.run(git_commit_command, shell=True, capture_output=True, text=True)
-            if commit_result.returncode == 0:
-                print("Commit command executed successfully.")  
-                print("Output:", commit_result.stdout)
-                print(f"Files were successfully committed.")
-                # run the git push command
-                push_result = subprocess.run(git_push_command, shell=True, capture_output=True, text=True)
-                if push_result.returncode == 0:
-                    print("Push command executed successfully.")
-                    print("Output:", push_result.stdout)
-                    print(f"Files were successfully pushed.")
-                else:
-                    print("Push command execution failed.")
-                    print("Error:", push_result.stderr) 
-                    print(f"Files were not pushed.")
-                    exit()
+            if os.path.exists(self.markdown_destination_path):
+                if os.path.exists(self.markdown_file_path):
+                    os.remove(self.markdown_file_path)
+                print(f"Markdown already exists, leaving unchanged: {self.markdown_file}")
             else:
-                print("Commit command execution failed.")
-                print("Error:", commit_result.stderr)
-                print(f"Files were not committed.")
-                exit()
-        else:
-            print("Add command execution failed.")
-            print("Error:", add_result.stderr) 
-            print(f"Files were not added.")
-            exit()
-        return 0
+                os.replace(self.markdown_file_path, self.markdown_destination_path)
+                self.files_to_commit.append(self.repo_markdown_rel)
+
+            print(f"Files moved to repository: {self.filename}, {self.markdown_file}")
+            return 0
+        except OSError as error:
+            print(f"File move failed for {self.filename}.")
+            print("Error:", error)
+            return 1
+
+def publish_posts(files_to_commit):
+    if not files_to_commit:
+        print("No files to publish.")
+        return 1
+
+    unique_files = list(dict.fromkeys(files_to_commit))
+    today = datetime.date.today()
+    git_add_command = "git add " + " ".join(unique_files)
+    git_commit_command = f"git commit -m 'New posts for {today}'"
+    git_push_command = "git push -u origin HEAD"
+
+    add_result = run_git(git_add_command, REPO_ROOT, "Git add")
+    if add_result.returncode != 0:
+        print("Files were not added.")
+        return 1
+
+    commit_result = run_git(git_commit_command, REPO_ROOT, "Git commit")
+    if commit_result.returncode != 0:
+        print("Files were not committed.")
+        return 1
+
+    push_result = run_git(git_push_command, REPO_ROOT, "Git push")
+    if push_result.returncode != 0:
+        print("Files were not pushed.")
+        return 1
+
+    print("Files were successfully pushed.")
+    return 0
 
 #images_folder_path = "/Users/brienna/Documents/PuppyDogKisses"  # replaced with IMAGES_PATH
 files = os.listdir(IMAGES_FOLDER)
@@ -145,26 +211,35 @@ elif created_count > 1:
     print(f"{created_count} posts successfully created.")
 else: print("No posts were created.")
 
-posts_to_publish = []  # Initialize files_to_publish list
-published_count = 0 # Initialize published_count variable
-move_result = -1
+files_to_commit = []
+moved_count = 0
 publish_result = -1
 
 if test_mode is False: # check for test mode
+    if post_list and not ensure_repo_ready(REPO_ROOT):
+        print("Repository not ready. Aborting.")
+        exit(1)
     for post in post_list: # move the files to the repository location, if not in test mode
         move_result = BlogPost.move_files(post)
         if move_result == 0:
-            posts_to_publish.append(post)  # Append the post to the list to be published
-            print(f"Post added to posts_to_publish: {post.image_file}")
-    for post in posts_to_publish: # publish the files to the repository location, if not in test mode
-        publish_result = BlogPost.publish_posts(post) # Publish the posts
-        if publish_result == 0:
-            published_count +=1
-            print(f"Post published: {post.image_file}")
-    if published_count == 1:
-        print("1 post published.")
-    elif published_count > 1:
-        print(f"{published_count} posts successfully published.")
-    else: print("No posts were published.")
-else:  print("Test mode: files not moved or commited to repository.")
+            moved_count += 1
+            if post.files_to_commit:
+                files_to_commit.extend(post.files_to_commit)
+            print(f"Post staged for publish: {post.image_file}")
+    if moved_count == 1:
+        print("1 post moved.")
+    elif moved_count > 1:
+        print(f"{moved_count} posts moved.")
+    else:
+        print("No posts were moved.")
 
+    if files_to_commit:
+        publish_result = publish_posts(files_to_commit)
+        if publish_result == 0:
+            print("Publish completed.")
+        else:
+            print("Publish failed.")
+    else:
+        print("No files to publish.")
+else:
+    print("Test mode: files not moved or commited to repository.")
