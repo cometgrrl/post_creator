@@ -20,6 +20,9 @@ REPO_ROOT = "/Users/brienna/Code/puppydogkisses"
 REPOSITORY_PATH = f"{REPO_ROOT}/content/blog/"
 IMAGES_FOLDER = "/Users/brienna/Code/puppydogkisses_images_for_posts/"
 
+start_time = datetime.datetime.now().isoformat(sep=" ", timespec="seconds")
+print(f"post_creator run started at: {start_time}")
+
 def run_git(command, cwd, description):
     result = subprocess.run(
         command,
