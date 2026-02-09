@@ -14,11 +14,25 @@ tags: Roxy
 import datetime # to parse the date from the filename
 import os # to get and move the files
 import subprocess # to run git commands
+import argparse # to parse command line arguments
 
 test_mode = False
 REPO_ROOT = "/Users/brienna/Code/puppydogkisses"
 REPOSITORY_PATH = f"{REPO_ROOT}/content/blog/"
-IMAGES_FOLDER = "/Users/brienna/Code/puppydogkisses_images_for_posts/"
+DEFAULT_IMAGES_FOLDER = "/Users/brienna/Code/puppydogkisses_images_for_posts/"
+
+parser = argparse.ArgumentParser(description="Create blog posts from image filenames.")
+parser.add_argument(
+    "-i",
+    "--images-folder",
+    default=DEFAULT_IMAGES_FOLDER,
+    help=f"Folder containing images (default: {DEFAULT_IMAGES_FOLDER})",
+)
+args = parser.parse_args()
+
+IMAGES_FOLDER = os.path.abspath(args.images_folder)
+if not IMAGES_FOLDER.endswith(os.sep):
+    IMAGES_FOLDER += os.sep
 
 start_time = datetime.datetime.now().isoformat(sep=" ", timespec="seconds")
 print(f"post_creator run started at: {start_time}")
