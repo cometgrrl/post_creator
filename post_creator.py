@@ -85,10 +85,44 @@ def ensure_repo_ready(repo_root):
 
     return True
 
+def is_jpeg_file(file_path):
+    try:
+        with open(file_path, "rb") as handle:
+            start = handle.read(2)
+            if start != b"\xff\xd8":
+                return False
+            handle.seek(-2, os.SEEK_END)
+            end = handle.read(2)
+            return end == b"\xff\xd9"
+    except OSError:
+        return False
+
+def normalize_image_filename(file_name, folder_path):
+    file_path = os.path.join(folder_path, file_name)
+    base_name, extension = os.path.splitext(file_name)
+    extension = extension.lower()
+
+    if extension in [".jpeg", ".jpg"]:
+        return file_name
+    if extension == "":
+        if is_jpeg_file(file_path):
+            new_name = f"{file_name}.jpeg"
+            new_path = os.path.join(folder_path, new_name)
+            if os.path.exists(new_path):
+                print(f"Skipping {file_name}: {new_name} already exists.")
+                return None
+            os.replace(file_path, new_path)
+            print(f"Added .jpeg extension: {file_name} -> {new_name}")
+            return new_name
+        print(f"Skipped non-JPEG file with no extension: {file_name}")
+        return None
+    print(f"Skipped unsupported file type: {file_name}")
+    return None
+
 class BlogPost:
     def __init__(self, image_file_name):
         self.image_file = image_file_name
-        self.filename = image_file_name.split(".")[0] # save the filename without the extension
+        self.filename = os.path.splitext(image_file_name)[0] # save the filename without the extension
         self.markdown_file = f"{self.filename}.md"
         self.markdown_image_path = f"/img/{self.image_file}" # set the image path based on the filename
         self.title_string = ""
@@ -199,12 +233,17 @@ result = -1
 # Check if there are files in the folder, if so, create a post for each image (.jpeg) file
 if files:
     for file in files:
-        if file.endswith(".jpeg"):
-            blog_post = BlogPost(file)
-            result = blog_post.create_markdown_file() # Create markdown file 
-            if result == 0:
-                post_list.append(blog_post)  # Append the result to the list
-                created_count += 1 # Increment the post count
+        file_path = os.path.join(IMAGES_FOLDER, file)
+        if not os.path.isfile(file_path):
+            continue
+        normalized_name = normalize_image_filename(file, IMAGES_FOLDER)
+        if not normalized_name:
+            continue
+        blog_post = BlogPost(normalized_name)
+        result = blog_post.create_markdown_file() # Create markdown file 
+        if result == 0:
+            post_list.append(blog_post)  # Append the result to the list
+            created_count += 1 # Increment the post count
 if created_count == 1:
     print(f"{created_count} post successfully created.")
 elif created_count > 1:
